@@ -152,7 +152,7 @@
 	 (fail))))
 
 (defn skip-ignorable []
-  (doM (many (<|> (satisfy #(= \space %))
+  (doM (many (<|> (satisfy #(= \u3000 %))
 		  (visited)))
        (return nil)))
 
@@ -163,25 +163,24 @@
 	       :let [row (get rows i)],
 	       j (range (count row))
 	       :let [c (get row j)]]
-	   (if (= c mino-char)
-	     [[i j]]
+	   (if (not= c \space)
+	     [[[i j] c]]
 	     nil))))
 
-(defn normalize [[origin & coords]]
-  (let [[y0 x0] origin]
-    (for [[y x] coords]
-      [(- y y0) (- x x0)])))
+(defn normalize [[origin & _ :as coords]]
+  (let [[[y0 x0] _] origin]
+    (for [[[y x] c] coords]
+      [[(- y y0) (- x x0)] c])))
 
 (defn minos->parser [minos value]
-  (letfn [(rec [c [[y x] & rest :as minos]]
+  (letfn [(rec [[[[y x] c] & rest :as minos]]
 	    (if (empty? minos)
 	      (doM (advance)
 		   (return value))
 	      (doM (ensure-value y x c)
-		   (rec c rest))))]
+		   (rec rest))))]
     (doM (skip-ignorable)
-	 (c <- (get-value))
-	 (rec c minos))))
+	 (rec minos))))
 
 (defn fold-with-<|> [[p & ps]]
   (if (empty? ps)
@@ -200,16 +199,19 @@
 	     `(defn ~parser-name []
 		(tmino->parser ~tmino-name '~name))))))
 
-(def-tmino-parser I L J O S Z T)
+(def-tmino-parser IV IH L J O S Z T)
 
 (defn parser []
-  (many1 (<|> (I-parser)
-	      (L-parser)
-	      (J-parser)
-	      (O-parser)
-	      (S-parser)
-	      (Z-parser)
-	      (T-parser))))
+  (many (<|> (IV-parser)
+	     (IH-parser)
+	     (doM (L-parser)
+		  (x <- (parser))
+		  (J-parser)
+		  (return x))
+	     (O-parser)
+	     (S-parser)
+	     (Z-parser)
+	     (T-parser))))
 
 (defn run-parse [input parser]
   (binding [*input* input]
@@ -222,3 +224,6 @@
   ([code n parser]
    (binding [*input* (vec (map vec (partition n code)))]
      (parser [[0 0] #{}]))))
+
+(defn parse [input]
+  (run-parse input (parser)))
