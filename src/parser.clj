@@ -1,5 +1,5 @@
 (ns parser
-  (:refer-clojure :exclude [char])
+  (:use tmino)
   )
 
 (declare >>=)
@@ -151,6 +151,66 @@
 	 (return v)
 	 (fail))))
 
+(defn skip-ignorable []
+  (doM (many (<|> (satisfy #(= \space %))
+		  (visited)))
+       (return nil)))
+
+
+(defn transform [rows]
+  (apply concat
+	 (for [i (range (count rows)),
+	       :let [row (get rows i)],
+	       j (range (count row))
+	       :let [c (get row j)]]
+	   (if (= c mino-char)
+	     [[i j]]
+	     nil))))
+
+(defn normalize [[origin & coords]]
+  (let [[y0 x0] origin]
+    (for [[y x] coords]
+      [(- y y0) (- x x0)])))
+
+(defn minos->parser [minos value]
+  (letfn [(rec [c [[y x] & rest :as minos]]
+	    (if (empty? minos)
+	      (doM (advance)
+		   (return value))
+	      (doM (ensure-value y x c)
+		   (rec c rest))))]
+    (doM (skip-ignorable)
+	 (c <- (get-value))
+	 (rec c minos))))
+
+(defn fold-with-<|> [[p & ps]]
+  (if (empty? ps)
+    p
+    (<|> p (fold-with-<|> ps))))
+
+(defn tmino->parser [tmino value]
+  (fold-with-<|> (map #(minos->parser (normalize (transform %)) value)
+		      tmino)))
+;;  (map #(normalize (transform %)) tmino))
+
+(defmacro def-tmino-parser [& names]
+  `(do ~@(for [name names]
+	   (let [parser-name (symbol (str name '-parser))
+		 tmino-name (symbol (str 'tmino- name))]
+	     `(defn ~parser-name []
+		(tmino->parser ~tmino-name '~name))))))
+
+(def-tmino-parser I L J O S Z T)
+
+(defn parser []
+  (many1 (<|> (I-parser)
+	      (L-parser)
+	      (J-parser)
+	      (O-parser)
+	      (S-parser)
+	      (Z-parser)
+	      (T-parser))))
+
 (defn run-parse [input parser]
   (binding [*input* input]
     (let [[ret _] (parser [[0 0] #{}])]
@@ -162,4 +222,3 @@
   ([code n parser]
    (binding [*input* (vec (map vec (partition n code)))]
      (parser [[0 0] #{}]))))
-
