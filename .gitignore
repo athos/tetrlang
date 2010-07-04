@@ -2,5 +2,6 @@ pom-generated.xml
 Manifest.txt
 tetrlang.jar
 lib
-classes*~
+classes
+*~
 *.class
