@@ -2,6 +2,8 @@
   (:use tmino)
   )
 
+(def whitespace-char \u3000)
+
 (declare >>=)
   
 (defn >> [m k]
@@ -152,7 +154,7 @@
 	 (fail))))
 
 (defn skip-ignorable []
-  (doM (many (<|> (satisfy #(= \u3000 %))
+  (doM (many (<|> (satisfy #(= whitespace-char %))
 		  (visited)))
        (return nil)))
 
