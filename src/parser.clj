@@ -195,25 +195,33 @@
 ;;  (map #(normalize (transform %)) tmino))
 
 (defmacro def-tmino-parser [& names]
-  `(do ~@(for [name names]
+  `(do ~@(for [[name value] names]
 	   (let [parser-name (symbol (str name '-parser))
 		 tmino-name (symbol (str 'tmino- name))]
 	     `(defn ~parser-name []
-		(tmino->parser ~tmino-name '~name))))))
+		(tmino->parser ~tmino-name '~value))))))
 
-(def-tmino-parser IV IH L J O S Z T)
+(def-tmino-parser
+  (T +)
+  (O -)
+  (S >)
+  (Z <)
+  (IH I)
+  (IV O)
+  (L L)
+  (J J))
 
 (defn parser []
-  (many (<|> (IV-parser)
+  (many (<|> (T-parser)
+	     (O-parser)
+	     (S-parser)
+	     (Z-parser)
+	     (IV-parser)
 	     (IH-parser)
 	     (doM (L-parser)
 		  (x <- (parser))
 		  (J-parser)
-		  (return x))
-	     (O-parser)
-	     (S-parser)
-	     (Z-parser)
-	     (T-parser))))
+		  (return x)))))
 
 (defn run-parse [input parser]
   (binding [*input* input]

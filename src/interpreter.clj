@@ -43,25 +43,25 @@
 	    conj
 	    ['~insn proc#])))
 
-(def-insn T
+(def-insn +
   [(assoc memory pointer (inc (memory pointer)))
    pointer])
 
-(def-insn O
+(def-insn -
   [(assoc memory pointer (dec (memory pointer)))
    pointer])
 
-(def-insn S
+(def-insn >
   [memory (inc pointer)])
 
-(def-insn Z
+(def-insn <
   [memory (dec pointer)])
 
-(def-insn IV
+(def-insn O
   (print (char (memory pointer)))
   [memory pointer])
 
-(def-insn IH
+(def-insn I
   (let [c (.read *in*)]
     [(assoc memory pointer c)
      pointer]))
