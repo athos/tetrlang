@@ -1,7 +1,7 @@
 (ns tetrlang
   (:use [clojure.contrib.duck-streams :only (read-lines)]
 	[clojure.contrib.command-line :only (with-command-line)]
-	[parser :only (parse whitespace-char)]
+	[parser :only (parse whitespace-chars)]
 	[interpreter :only (execute)])
   (:gen-class))
 
@@ -14,7 +14,8 @@
 	(cond (> length width)
 	      ,(apply str (take width line))
 	      (< length width)
-	      ,(apply str line (repeat (- width length) whitespace-char))
+	      ,(apply str line (repeat (- width length)
+				       (first whitespace-chars)))
 	      :else line)))))
 
 (defn read-file [filename]

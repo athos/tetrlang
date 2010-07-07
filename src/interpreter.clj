@@ -59,6 +59,7 @@
 
 (def-insn O
   (print (char (memory pointer)))
+  (flush)
   [memory pointer])
 
 (def-insn I

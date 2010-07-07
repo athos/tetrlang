@@ -2,7 +2,7 @@
   (:use tmino)
   )
 
-(def whitespace-char \u3000)
+(def whitespace-chars #{\space \u3000})
 
 (declare >>=)
   
@@ -154,10 +154,13 @@
 	 (fail))))
 
 (defn skip-ignorable []
-  (doM (many (<|> (satisfy #(= whitespace-char %))
+  (doM (many (<|> (satisfy #(whitespace-chars %))
 		  (visited)))
        (return nil)))
 
+(defn raise-error [msg]
+  (fn [[pos _]]
+    (throw (IOException. (msg pos)))))
 
 (defn transform [rows]
   (apply concat
@@ -165,24 +168,24 @@
 	       :let [row (get rows i)],
 	       j (range (count row))
 	       :let [c (get row j)]]
-	   (if (not= c \space)
-	     [[[i j] c]]
+	   (if (= c mino-char)
+	     [[i j]]
 	     nil))))
 
-(defn normalize [[origin & _ :as coords]]
-  (let [[[y0 x0] _] origin]
-    (for [[[y x] c] coords]
-      [[(- y y0) (- x x0)] c])))
+(defn normalize [[origin & coords]]
+  (let [[y0 x0] origin]
+    (for [[y x] coords]
+      [(- y y0) (- x x0)])))
 
 (defn minos->parser [minos value]
-  (letfn [(rec [[[[y x] c] & rest :as minos]]
+  (letfn [(rec [c [[y x] & rest :as minos]]
 	    (if (empty? minos)
 	      (doM (advance)
 		   (return value))
 	      (doM (ensure-value y x c)
-		   (rec rest))))]
-    (doM (skip-ignorable)
-	 (rec minos))))
+		   (rec c rest))))]
+    (doM (c <- (get-value))
+	 (rec c minos))))
 
 (defn fold-with-<|> [[p & ps]]
   (if (empty? ps)
@@ -212,16 +215,19 @@
   (J J))
 
 (defn parser []
-  (many (<|> (T-parser)
-	     (O-parser)
-	     (S-parser)
-	     (Z-parser)
-	     (IV-parser)
-	     (IH-parser)
-	     (doM (L-parser)
-		  (x <- (parser))
-		  (J-parser)
-		  (return x)))))
+  (many (doM (skip-ignorable)
+	     (<|> (T-parser)
+		  (O-parser)
+		  (S-parser)
+		  (Z-parser)
+		  (IV-parser)
+		  (IH-parser)
+		  (doM (L-parser)
+		       (x <- (parser))
+		       (skip-ignorable)
+		       (J-parser)
+		       (return x))
+		  ))))
 
 (defn run-parse [input parser]
   (binding [*input* input]
