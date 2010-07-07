@@ -1,0 +1,58 @@
+tetrlang: A Tetrlang Interpreter
+================================
+
+Tetrlang is an esoteric language inspired by Tetris.
+The instructions in Tetrlang are represented by Tetris
+blocks (tetraminos). Each tetramino has a corresponding
+Brainfuck instruction.
+
+Prerequisites
+-------------
+
+For building Tetrlang interpreter by yourself, you must have:
+
+* Leiningen (http://github.com/technomancy/leiningen)
+
+But, you don't need it for just running the interpreter.
+
+Building
+--------
+
+To build tetrlang, type the following commands:
+    $ cd tetrlang
+    $ lein uberjar
+
+Dependencies
+------------
+
+tetrlang depends on:
+
+* Clojure 1.1.0
+* clojure-contrib 1.0
+
+These dependencies can be downloaded automatically using:
+    $ lein deps
+
+Usage
+-----
+
+To run tetrlang, just do:
+    $ java -jar tetrlang-standalone.jar
+
+You can try out the interpreter with example codes in
+the `examples' directory. Specify '-Dfile.encoding=UTF-8'
+option if your environment's default character encoding
+is other than UTF-8.
+
+    $ java -Dfile.encoding=UTF-8 -jar tetrlang-standalone.jar -f examples/hello.tetr
+
+The interpreter has several options. To display all its
+options and their descriptions, run it with `--help' option.
+
+    $ java -jar tetrlang-standalone.jar --help
+
+License
+-------
+
+Copyright (C) 2010 OHTA Shogo
+Distributed under the MIT License.
