@@ -1,9 +1,9 @@
 (ns interpreter)
 
-(def *insn-table* (atom {}))
+(declare *insn-table*)
 
 (defn execute-insn [insn memory pointer k]
-  (let [[memory* pointer*] ((@*insn-table* insn) memory pointer)]
+  (let [[memory* pointer*] ((*insn-table* insn) memory pointer)]
     #(k memory* pointer*)))
 
 (declare execute-toplevel execute-insns execute-loop)
@@ -35,34 +35,23 @@
       #(k memory pointer)
       #(rec code0 memory pointer))))
 
-(defmacro def-insn [insn & body]
-  `(letfn [(proc# [~'memory ~'pointer]
-	     ;; (printf "%s: %s(%d)\n" '~insn ~'memory ~'pointer)
-	     ~@body)]
-     (swap! *insn-table*
-	    conj
-	    ['~insn proc#])))
+(defmacro def-insns [& insns]
+  `(def ~'*insn-table*
+	~(apply hash-map
+		 (mapcat (fn [[name & body]]
+			   `['~name (fn [~'memory ~'pointer] ~@body)])
+			 insns))))
 
-(def-insn +
-  [(assoc memory pointer (inc (memory pointer)))
-   pointer])
-
-(def-insn -
-  [(assoc memory pointer (dec (memory pointer)))
-   pointer])
-
-(def-insn >
-  [memory (inc pointer)])
-
-(def-insn <
-  [memory (dec pointer)])
-
-(def-insn O
-  (print (char (memory pointer)))
-  (flush)
-  [memory pointer])
-
-(def-insn I
-  (let [c (.read *in*)]
-    [(assoc memory pointer c)
-     pointer]))
+(def-insns
+  (+ [(assoc memory pointer (inc (memory pointer)))
+      pointer])
+  (- [(assoc memory pointer (dec (memory pointer)))
+      pointer])
+  (> [memory (inc pointer)])
+  (< [memory (dec pointer)])
+  (O (print (char (memory pointer)))
+     (flush)
+     [memory pointer])
+  (I (let [c (.read *in*)]
+       [(assoc memory pointer c)
+	pointer])))
