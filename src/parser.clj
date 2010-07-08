@@ -158,10 +158,6 @@
 		  (visited)))
        (return nil)))
 
-(defn raise-error [msg]
-  (fn [[pos _]]
-    (throw (IOException. (msg pos)))))
-
 (defn transform [rows]
   (apply concat
 	 (for [i (range (count rows)),
@@ -195,7 +191,6 @@
 (defn tmino->parser [tmino value]
   (fold-with-<|> (map #(minos->parser (normalize (transform %)) value)
 		      tmino)))
-;;  (map #(normalize (transform %)) tmino))
 
 (defmacro def-tmino-parser [& names]
   `(do ~@(for [[name value] names]
